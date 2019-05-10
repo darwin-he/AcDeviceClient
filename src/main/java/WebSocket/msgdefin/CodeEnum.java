@@ -1,4 +1,4 @@
-package utils;
+package WebSocket.msgdefin;
 
 /**
  * \* Created with IntelliJ IDEA.
@@ -8,7 +8,7 @@ package utils;
  * \* Description:
  * \
  */
-public enum DeviceCodeEnum {
+public enum CodeEnum {
     SUCCESS(0,    "成功！"),
     DEFALUT(-1,"失败！"),
     OPENDOOR(2,"开门！"),
@@ -26,26 +26,28 @@ public enum DeviceCodeEnum {
     UPDATE_CARD(15,"上传卡片数据!"),
     UPDATE_CARD_DEFAULT(16,"上传卡片数据失败！"),
     UPDATE_CARD_SUCCESS(17,"上传卡片数据成功！"),
-    UPDATE_DEVICE_INFOR(18,"上传设备信息！"),
-    UPDATE_DEVICE_INFOR_DEFAULT(19,"上传设备信息失败！"),
-    UPDATE_DEVICE_INFOR_SUCCESS(20,"上传设备信息成功！"),
+    UPDATE_IDENTITY_INFOR(18,"上传身份信息！"),
+    UPDATE_IDENTITY_INFOR_DEFAULT(19,"上传身份信息失败！"),
+    UPDATE_IDENTITY_INFOR_SUCCESS(20,"上传身份信息成功！"),
     UPDATE_ENVIRODATE(21,"上传环境数据！"),
     UPDATE_ENVIRODATE_DEFAULT(22,"上传环境数据失败！"),
     UPDATA_ENVIRODATE_SUCCESS(23,"上传环境数据成功！"),
     UPDATA_DOOR_STATE(24,"上传门禁状态数据！"),
     UPDATE_DOOR_STATE_DEFAULT(25,"上传门禁状态数据失败！"),
     UPDATE_DOOR_STATE_SUCCESS(26,"上传门禁状态数据成功！"),
-    GET_ADVERTISMENT(27,"获取广告数据！"),
-    GET_ADVERTISMENT_DEFAULT(28,"获取广告数据失败！"),
-    GET_ADVERTISMENT_SUCCESS(29,"获取广告数据成功！"),
+    ADVERTISMENT(27,"广告数据！"),
+    PUSHMSG(28,"推送消息！"),
     GET_USERINFOR(30,"获取用户信息！"),
     GET_USERINFOR_DEFAULT(31,"获取用户信息失败！"),
-    GET_USERINFOR_SUCCEDSS(32,"获取用户信息成功！");
+    GET_USERINFOR_SUCCEDSS(32,"获取用户信息成功！"),
+    UPDATE_DEVICE_INFOR(33,"上传设备信息！"),
+    UPDATE_DEVICE_INFOR_SUCCESS(34,"上传设备信息成功！"),
+    UPDATE_DEVICE_INFOR_DEFAULT(35,"上传设备信息失败！");
     
     private final int code;
     private final String msg;
 
-    DeviceCodeEnum(int _code, String _msg){
+    CodeEnum(int _code, String _msg){
         this.code = _code;
         this.msg = _msg;
     }
@@ -59,7 +61,7 @@ public enum DeviceCodeEnum {
     }
 
     public static String getMsgByCode(int code){
-        for(DeviceCodeEnum _enum : values()){
+        for(CodeEnum _enum : values()){
             if(_enum.getCode() == code){
                 return _enum.getMsg();
             }

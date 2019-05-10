@@ -6,5 +6,9 @@ package utils;
  */
 
 public class LogUtil {
+	
+	public static boolean cleanLogData(){
+		return true;
+	}
 
 }

@@ -1,4 +1,4 @@
-package NetService.vo;
+package WebSocket.vo;
 
 /**
  * @author darwin_he

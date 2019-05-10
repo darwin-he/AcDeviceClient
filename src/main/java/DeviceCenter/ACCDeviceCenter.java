@@ -1,9 +1,9 @@
 package DeviceCenter;
 
-import NetService.vo.DeviceInfor;
-import NetService.vo.DeviceStateDate;
-import NetService.vo.EnviroDate;
-import NetService.vo.UserCard;
+import WebSocket.vo.DeviceInfor;
+import WebSocket.vo.DeviceStateDate;
+import WebSocket.vo.EnviroDate;
+import WebSocket.vo.UserCard;
 import device.RfidSensorModule.Mfrc522.StatusCode;
 import device.RfidSensorModule.Mfrc522.UID;
 import device.StepperMotor.TurnBack;
@@ -18,15 +18,16 @@ public interface ACCDeviceCenter{
 
 	/**
 	 * 开门
-	 * @param onBack
 	 */
-	void openDoor(TurnBack onBack);
+	void openDoor(TurnBack back);
+	
+	//监听非命令控制的开关门
+	void setAutoOpenOrCloseListener(TurnBack autoOpen,TurnBack autoClose);
 	
 	/**
 	 * 关门
-	 * @param onBack
 	 */
-	void closeDoor(TurnBack onBack);
+	void closeDoor(TurnBack back);
 
 	/**
 	 * 手动寻卡一次，时间限制为8秒，执行此函数会关闭自动寻卡，需要重新启动自动寻卡功能。
@@ -105,9 +106,9 @@ public interface ACCDeviceCenter{
 	 */
 	boolean resetDevice();
 	
-	DeviceInfor getDeviceInfor();
+	String getDeviceNumber();
 	
-	boolean saveDeviceInfor(DeviceInfor deviceInfor);
+	DeviceInfor getDeviceInfor();
 	
 	DeviceStateDate getDeviceStateDate();
 	

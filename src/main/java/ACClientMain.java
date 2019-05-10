@@ -1,15 +1,10 @@
-import NetService.MyNetService;
-import NetService.MyNetServiceImpl;
+import WebSocket.Local.LocalClient;
+import WebSocket.Local.LocalClientImpl;
 import com.pi4j.io.gpio.GpioController;
 import com.pi4j.io.gpio.GpioFactory;
-import com.pi4j.io.gpio.RaspiPin;
 import com.pi4j.util.Console;
 import DeviceCenter.ACCDeviceCenter;
 import DeviceCenter.ACCDeviceCenterImpl;
-import device.GraSensorModule.GraSensorModulePin;
-import device.RfidSensorModule.RfidPin;
-import device.StepperMotor.StepperMotorPin;
-import device.TouchSensor.TouchSensorPin;
 
 import java.io.IOException;
 import java.net.URI;
@@ -39,18 +34,18 @@ public class ACClientMain {
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
-        MyNetService myNetService= new MyNetServiceImpl(uri,deviceCenter);;
+        LocalClient myNetService= new LocalClientImpl(uri);;
         try {
-            myNetService.connectToService();
+            myNetService.connectToService(deviceCenter);
         } catch (Exception e) {
             e.printStackTrace();
         }
         
-        console.title("<-- The ACCilent Application -->", "started");
+        console.println("<-- The ACCilent Application -->", "started");
         while (console.isRunning()){
           //Do something
         }
-        console.title("<-- The ACCilent Application -->", "GoodBye");
+        console.println("<-- The ACCilent Application -->", "GoodBye");
         
         myNetService.disConnect();
         gpioController.shutdown();

@@ -1,9 +1,9 @@
 package DeviceCenter;
 
-import NetService.vo.DeviceInfor;
-import NetService.vo.DeviceStateDate;
-import NetService.vo.EnviroDate;
-import NetService.vo.UserCard;
+import WebSocket.vo.DeviceInfor;
+import WebSocket.vo.DeviceStateDate;
+import WebSocket.vo.EnviroDate;
+import WebSocket.vo.UserCard;
 import com.pi4j.io.gpio.RaspiPin;
 import device.GraSensorModule.GraSensorModuleImpl;
 import device.GraSensorModule.GraSensorModulePin;
@@ -36,6 +36,10 @@ public class ACCDeviceCenterImpl implements ACCDeviceCenter {
 	private StepperMotorPin stepperMotorPin;
 	private TouchSensorPin touchSensorPin;
 	
+	//自动开关门监听回调
+	private TurnBack doorOpenBack;
+	private TurnBack doorCloseBack;
+	
 	public ACCDeviceCenterImpl() throws IOException {
 		graSensorModulePin=new GraSensorModulePin(RaspiPin.GPIO_25);
 		rfidPin=new RfidPin(RaspiPin.GPIO_06);
@@ -49,10 +53,8 @@ public class ACCDeviceCenterImpl implements ACCDeviceCenter {
 		//开启开门检测
 		touchSensor.setTouchSensorListener(gpioPinDigitalStateChangeEvent -> {
 			//由低电平变为高电平说明正有物品触摸在传感器上
-			if (gpioPinDigitalStateChangeEvent.getState().isHigh()){
-				//开门(如果需要记录小区出门记录，可以在此处的onpenDoor函数添加回调)
-				openDoor(null);
-			}
+			if (gpioPinDigitalStateChangeEvent.getState().isHigh())
+				openDoor(doorOpenBack);
 		});
 	}
 	
@@ -97,21 +99,27 @@ public class ACCDeviceCenterImpl implements ACCDeviceCenter {
 	
 	/**
 	 * 开门
-	 * @param onBack
 	 */
 	@Override
-	public void openDoor(TurnBack onBack) {
+	public void openDoor(TurnBack back) {
 		stepperMotor.openDoor(isSuccessed -> {
 			//成功开门后开启通过检测
-			startPassCheck();
+			if (isSuccessed){
+				startPassCheck();
+			}
 			//执行回调函数
-			if (onBack!=null)
-				onBack.turnFinshed(isSuccessed);
+			if (back!=null)
+				back.turnFinshed(isSuccessed);
 		});
 	}
 
+	@Override
+	public void setAutoOpenOrCloseListener(TurnBack autoOpen, TurnBack autoClose) {
+		doorOpenBack=autoOpen;doorCloseBack=autoClose;
+	}
+
 	/**
-	 * 通过检测
+	 * 开启通过检测
 	 */
 	private void startPassCheck(){
 		graSensorModule.setGraSensorModuleListener(gpioPinDigitalStateChangeEvent -> {
@@ -120,22 +128,22 @@ public class ACCDeviceCenterImpl implements ACCDeviceCenter {
 				//关闭通过检测
 				graSensorModule.setGraSensorModuleListener(null);
 				//关门
-				closeDoor(null);
+				closeDoor(doorCloseBack);
 			}
 		});
 	}
 	
 	/**
 	 * 关门
-	 * @param onBack
 	 */
 	@Override
-	public void closeDoor(TurnBack onBack) {
+	public void closeDoor(TurnBack back) {
 		stepperMotor.closeDoor(isSuccessed -> {
-			if (onBack!=null)
-				onBack.turnFinshed(isSuccessed);
+			if (back!=null)
+				back.turnFinshed(isSuccessed);
 		});
 	}
+	
 
 	/**
 	 * 寻卡
@@ -233,15 +241,16 @@ public class ACCDeviceCenterImpl implements ACCDeviceCenter {
 		return isSuccess;
 	}
 
-@Override
+	@Override
+	public String getDeviceNumber() {
+		return "12345678";
+	}
+
+	@Override
 	public DeviceInfor getDeviceInfor() {
 		return new DeviceInfor();
 	}
 	
-	@Override
-	public boolean saveDeviceInfor(DeviceInfor deviceInfor) {
-		return true;
-	}
 	
 	@Override
 	public DeviceStateDate getDeviceStateDate() {

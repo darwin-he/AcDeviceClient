@@ -1,6 +1,6 @@
 package DeviceCenter;
 
-import NetService.vo.UserCard;
+import WebSocket.vo.UserCard;
 
 /**
  * @author darwin_he

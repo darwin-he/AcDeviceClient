@@ -18,7 +18,7 @@ import java.net.URISyntaxException;
 
 public class ACClientMain {
     
-    private static final String url="http://192.168.191.1:8080/websocket";
+    private static final String url="http://192.168.191.1:8080/LocalService";
     
     public static void main(String args[]) throws IOException {
         final Console console = new Console();

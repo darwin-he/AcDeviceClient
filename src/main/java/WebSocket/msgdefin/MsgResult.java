@@ -11,11 +11,13 @@ package WebSocket.msgdefin;
  */
 public class MsgResult {
     private MsgRoute msgRoute;
+    
     private int code = CodeEnum.SUCCESS.getCode();
+    
     private String msg = CodeEnum.SUCCESS.getMsg();
+    
     private Object data = "";
     
-
     public MsgResult() {}
 
     public MsgResult(MsgRoute msgRoute, int code, String msg) {
@@ -32,18 +34,23 @@ public class MsgResult {
     public int getCode() {
         return code;
     }
+    
     public void setCode(int code) {
         this.code = code;
     }
+    
     public String getMsg() {
         return msg;
     }
+    
     public void setMsg(String msg) {
         this.msg = msg;
     }
+    
     public Object getData() {
         return data;
     }
+    
     public void setData(Object data) {
         this.data = data;
     }

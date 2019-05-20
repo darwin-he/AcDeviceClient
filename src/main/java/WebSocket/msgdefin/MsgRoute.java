@@ -5,9 +5,7 @@ package WebSocket.msgdefin;
  * @date 2019/5/11 0:40
  */
 public class MsgRoute {
-	
 	private String to;
-	
 	private String from;
 
 	public String getTo() {
@@ -25,5 +23,4 @@ public class MsgRoute {
 	public void setFrom(String from) {
 		this.from = from;
 	}
-	
 }

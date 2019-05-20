@@ -59,12 +59,20 @@ public class LocalClientImpl extends WebSocketClient implements LocalClient {
 		MsgRoute backMsgRoute=new MsgRoute();
 		backMsgRoute.setFrom(acceptData.getMsgRoute().getTo());
 		backMsgRoute.setTo(acceptData.getMsgRoute().getFrom());
+		
 		int code=acceptData.getCode();
 		if (code== CodeEnum.GET_USERINFOR_SUCCEDSS.getCode()){//用户识别成功
 			//命令卡片休眠
 			deviceCenter.haltCard();
 			deviceCenter.openDoor(isSuccessed -> {
-				sendStateDate(toAdmin);
+				MsgResult sendData;
+				if (isSuccessed){
+					sendData=new MsgResult(toAdmin,CodeEnum.OPENDOOR_SUCCESS.getCode(),CodeEnum.OPENDOOR_SUCCESS.getMsg());
+				}else {
+					sendData=new MsgResult(toAdmin,CodeEnum.OPENDOOR_DEFAULT.getCode(),CodeEnum.OPENDOOR_DEFAULT.getMsg());
+				}
+				String sendString=JSON.toJSONString(sendData);
+				send(sendString);
 			});
 		}else if (code== CodeEnum.UPDATE_CARD.getCode()){//读卡片指令
 			//寻找一张卡
@@ -83,7 +91,6 @@ public class LocalClientImpl extends WebSocketClient implements LocalClient {
 			deviceCenter.openDoor(isSuccessed -> {
 				MsgResult sendData;
 				if(isSuccessed){
-					sendStateDate(toAdmin);
 					sendData=new MsgResult(toAdmin, CodeEnum.OPENDOOR_SUCCESS.getCode(), CodeEnum.OPENDOOR_SUCCESS.getMsg());
 				}else {
 					sendData=new MsgResult(toAdmin, CodeEnum.OPENDOOR_DEFAULT.getCode(), CodeEnum.OPENDOOR_DEFAULT.getMsg());
@@ -95,7 +102,6 @@ public class LocalClientImpl extends WebSocketClient implements LocalClient {
 			deviceCenter.closeDoor(isSuccessed -> {
 				MsgResult sendData;
 				if (isSuccessed){
-					sendStateDate(toAdmin);
 					sendData=new MsgResult(toAdmin, CodeEnum.CCLOSEDOOR_SUCCESS.getCode(), CodeEnum.CCLOSEDOOR_SUCCESS.getMsg());
 				}else {
 					sendData=new MsgResult(toAdmin, CodeEnum.CLOSEDOOR_DEFAULT.getCode(), CodeEnum.CLOSEDOOR_DEFAULT.getMsg());
@@ -110,7 +116,25 @@ public class LocalClientImpl extends WebSocketClient implements LocalClient {
 				getUserByUserCard(userCard);
 			});
 			//设置自动开关门监听
-			deviceCenter.setAutoOpenOrCloseListener(isSuccessed -> sendStateDate(toAdmin), isSuccessed -> sendStateDate(toAdmin));
+			deviceCenter.setAutoOpenOrCloseListener(isSuccessed -> {
+				MsgResult sendData;
+				if(isSuccessed){
+					sendData=new MsgResult(toAdmin, CodeEnum.OPENDOOR_SUCCESS.getCode(), CodeEnum.OPENDOOR_SUCCESS.getMsg());
+				}else {
+					sendData=new MsgResult(toAdmin, CodeEnum.OPENDOOR_DEFAULT.getCode(), CodeEnum.OPENDOOR_DEFAULT.getMsg());
+				}
+				String sendString=JSON.toJSONString(sendData);
+				send(sendString);
+			}, isSuccessed -> {
+				MsgResult sendData;
+				if(isSuccessed){
+					sendData=new MsgResult(toAdmin, CodeEnum.OPENDOOR_SUCCESS.getCode(), CodeEnum.OPENDOOR_SUCCESS.getMsg());
+				}else {
+					sendData=new MsgResult(toAdmin, CodeEnum.OPENDOOR_DEFAULT.getCode(), CodeEnum.OPENDOOR_DEFAULT.getMsg());
+				}
+				String sendString=JSON.toJSONString(sendData);
+				send(sendString);
+			});
 			//开始采集环境数据
 			startCollectEnvirData();
 		}else if (code== CodeEnum.RESET_DEVICE.getCode()){//复位设备
@@ -127,7 +151,6 @@ public class LocalClientImpl extends WebSocketClient implements LocalClient {
 			}
 			String sendString=JSON.toJSONString(sendData);
 			send(sendString);
-			sendStateDate(toAdmin);
 		}else if (code== CodeEnum.CLEAN_LOG.getCode()){//清理日志
 			MsgResult sendData;
 			if (LogUtil.cleanLogData()){
@@ -232,7 +255,7 @@ public class LocalClientImpl extends WebSocketClient implements LocalClient {
 		EnviroDate enviroDate=deviceCenter.getEnviroDate();
 		MsgResult sendData;
 		if (enviroDate!=null){
-			sendData=new MsgResult(msgRoute, CodeEnum.UPDATE_ENVIRODATE.getCode(), CodeEnum.UPDATE_ENVIRODATE.getMsg(),enviroDate);
+			sendData=new MsgResult(msgRoute, CodeEnum.UPDATA_ENVIRODATE_SUCCESS.getCode(), CodeEnum.UPDATA_ENVIRODATE_SUCCESS.getMsg(),enviroDate);
 		}else {
 			sendData=new MsgResult(msgRoute, CodeEnum.UPDATE_ENVIRODATE_DEFAULT.getCode(), CodeEnum.UPDATE_ENVIRODATE_DEFAULT.getMsg());
 		}
@@ -281,7 +304,7 @@ public class LocalClientImpl extends WebSocketClient implements LocalClient {
 		DeviceStateDate stateDate=deviceCenter.getDeviceStateDate();
 		MsgResult sendData;
 		if (stateDate!=null){
-			sendData=new MsgResult(msgRoute, CodeEnum.UPDATA_DOOR_STATE.getCode(), CodeEnum.UPDATA_DOOR_STATE.getMsg(),stateDate);
+			sendData=new MsgResult(msgRoute, CodeEnum.UPDATE_DOOR_STATE_SUCCESS.getCode(), CodeEnum.UPDATE_DOOR_STATE_SUCCESS.getMsg(),stateDate);
 		}else {
 			sendData=new MsgResult(msgRoute, CodeEnum.UPDATE_DOOR_STATE_DEFAULT.getCode(), CodeEnum.UPDATE_DOOR_STATE_DEFAULT.getMsg());
 		}
@@ -296,13 +319,12 @@ public class LocalClientImpl extends WebSocketClient implements LocalClient {
 		DeviceInfor deviceInfor=deviceCenter.getDeviceInfor();
 		MsgResult sendData;
 		if (deviceInfor!=null){
-			sendData=new MsgResult(msgRoute, CodeEnum.UPDATE_DEVICE_INFOR.getCode(), CodeEnum.UPDATE_DEVICE_INFOR.getMsg(),deviceInfor);
+			sendData=new MsgResult(msgRoute, CodeEnum.UPDATE_DEVICE_INFOR_SUCCESS.getCode(), CodeEnum.UPDATE_DEVICE_INFOR_SUCCESS.getMsg(),deviceInfor);
 		}else {
 			sendData=new MsgResult(msgRoute, CodeEnum.UPDATE_DEVICE_INFOR_DEFAULT.getCode(), CodeEnum.UPDATE_DEVICE_INFOR_DEFAULT.getMsg());
 		}
 		String sendString=JSON.toJSONString(sendData);
 		send(sendString);
 	}
-	
 	
 }

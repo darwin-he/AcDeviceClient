@@ -17,6 +17,7 @@ import device.StepperMotor.TurnBack;
 import device.TouchSensor.TouchSensorImpl;
 import device.TouchSensor.TouchSensorPin;
 import utils.Hex;
+import utils.TimeUtil;
 
 import java.io.IOException;
 
@@ -147,7 +148,6 @@ public class ACCDeviceCenterImpl implements ACCDeviceCenter {
 
 	/**
 	 * 寻卡
-	 *
 	 * @return
 	 */
 	@Override
@@ -156,32 +156,7 @@ public class ACCDeviceCenterImpl implements ACCDeviceCenter {
 	}
 
 	/**
-	 * 防冲撞及选卡
-	 *
-	 * @return
-	 */
-	@Override
-	public UID anticollAndSelect() throws IOException {
-		return myRfid.anticollAndSelect();
-	}
-
-	/**
-	 * 验证卡片的块密码
-	 *
-	 * @param authKeyA  是否是KeyA
-	 * @param blockAddr
-	 * @param key
-	 * @param uid
-	 * @return
-	 */
-	@Override
-	public StatusCode authenticate(boolean authKeyA, byte blockAddr, byte[] key, UID uid) throws IOException {
-		return myRfid.authenticate(authKeyA,blockAddr,key,uid);
-	}
-
-	/**
 	 * 写入块数据
-	 *
 	 * @param blockAddr
 	 * @param buffer    必须是16字节数据
 	 * @return
@@ -193,7 +168,6 @@ public class ACCDeviceCenterImpl implements ACCDeviceCenter {
 
 	/**
 	 * 读块数据
-	 *
 	 * @param blockAddr
 	 * @return 返回16字节数据
 	 */
@@ -201,38 +175,7 @@ public class ACCDeviceCenterImpl implements ACCDeviceCenter {
 	public byte[] readBlockData(byte blockAddr) throws IOException {
 		return myRfid.readBlockData(blockAddr);
 	}
-
-	/**
-	 * 唤醒卡片
-	 *
-	 * @return
-	 */
-	@Override
-	public StatusCode wakeupCard() throws IOException {
-		return myRfid.wakeupCard();
-	}
-
-	/**
-	 * 命令卡片进入休眠状态
-	 *
-	 * @return
-	 */
-	@Override
-	public StatusCode haltCard() {
-		return myRfid.haltCard();
-	}
-
-	/**
-	 * 退出验证状态
-	 */
-	@Override
-	public void stopCrypto1() {
-		myRfid.stopCrypto1();
-	}
-
-	/**
-	 * 复位设备
-	 */
+	
 	@Override
 	public boolean resetDevice() {
 		boolean isSuccess;
@@ -243,23 +186,40 @@ public class ACCDeviceCenterImpl implements ACCDeviceCenter {
 
 	@Override
 	public String getDeviceNumber() {
-		return "12345678";
+		return "10010103403";
 	}
 
 	@Override
 	public DeviceInfor getDeviceInfor() {
-		return new DeviceInfor();
+		DeviceInfor deviceInfor=new DeviceInfor();
+		deviceInfor.setDeviceNumber(getDeviceNumber());
+		deviceInfor.setDeviceName("阿尔法智能门禁终端");
+		deviceInfor.setOsName("Raspbian");
+		deviceInfor.setMemorySize("16GB");
+		deviceInfor.setRemainderMemory("8.35G");
+		deviceInfor.setRunTimeEnviro("JVM(64)");
+		return deviceInfor;
 	}
-	
 	
 	@Override
 	public DeviceStateDate getDeviceStateDate() {
-		return new DeviceStateDate();
+		DeviceStateDate stateDate=new DeviceStateDate();
+		stateDate.setDoorState("正常");
+		stateDate.setRfidState("正常");
+		stateDate.setGraState("正常");
+		stateDate.setTouchState("正常");
+		stateDate.setEnviroState("正常");
+		return stateDate;
 	}
 	
 	@Override
 	public EnviroDate getEnviroDate() {
-		return new EnviroDate();
+		EnviroDate enviroDate=new EnviroDate();
+		enviroDate.setTemperature(26.5f);
+		enviroDate.setHumidity(21.3f);
+		enviroDate.setLightIntensity(36256);
+		enviroDate.setTime(TimeUtil.getCurrentTime());
+		return enviroDate;
 	}
 	
 }

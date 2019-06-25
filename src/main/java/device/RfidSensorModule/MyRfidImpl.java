@@ -59,7 +59,8 @@ public class MyRfidImpl implements MyRfid {
      */
     @Override
     public UID searchCardOneTime() {
-        if (isContinueSearch){//关闭自动识别
+        //关闭自动识别
+        if (isContinueSearch){
             isContinueSearch=false;
             try {
                 Thread.sleep(500);
@@ -74,6 +75,7 @@ public class MyRfidImpl implements MyRfid {
             if (statusCode==StatusCode.OK){
                 uid=anticollAndSelect();
                 if (uid!=null){
+                    haltCard();
                     break;
                 }else {
                     continue;
@@ -90,7 +92,7 @@ public class MyRfidImpl implements MyRfid {
     }
 
     /**
-     * 开启自动寻卡
+     * 开启自动寻卡，每两秒寻卡一次
      *
      * @param onSearchCard 寻卡成功时的回调函数
      */
@@ -107,16 +109,16 @@ public class MyRfidImpl implements MyRfid {
                     if (statusCode==StatusCode.OK){
                         UID uid=anticollAndSelect();
                         if (uid!=null){
+                            haltCard();
                             onSearchCard.onSearchCard(uid);
                         }else {
                             continue;
                         }
-                    }else {
-                        try {
-                            Thread.sleep(1500);
-                        }catch (InterruptedException i){
-                            isContinueSearch=false;
-                        }
+                    }
+                    try {
+                        Thread.sleep(2000);
+                    }catch (InterruptedException i){
+                        isContinueSearch=false;
                     }
                 }
             }

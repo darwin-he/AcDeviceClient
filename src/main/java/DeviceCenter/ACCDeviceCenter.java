@@ -5,7 +5,6 @@ import WebSocket.vo.DeviceStateDate;
 import WebSocket.vo.EnviroDate;
 import WebSocket.vo.UserCard;
 import device.RfidSensorModule.Mfrc522.StatusCode;
-import device.RfidSensorModule.Mfrc522.UID;
 import device.StepperMotor.TurnBack;
 
 import java.io.IOException;
@@ -54,22 +53,6 @@ public interface ACCDeviceCenter{
 	StatusCode searchCard() throws IOException;
 	
 	/**
-	 * 防冲撞及选卡
-	 * @return
-	 */
-	UID anticollAndSelect() throws IOException;
-	
-	/**
-	 * 验证卡片的块密码
-	 * @param authKeyA 是否是KeyA
-	 * @param blockAddr
-	 * @param key
-	 * @param uid
-	 * @return
-	 */
-	StatusCode authenticate(boolean authKeyA, byte blockAddr, byte[] key, UID uid) throws IOException;
-	
-	/**
 	 * 写入块数据
 	 * @param blockAddr
 	 * @param buffer 必须是16字节数据
@@ -84,26 +67,6 @@ public interface ACCDeviceCenter{
 	 */
 	byte[] readBlockData(byte blockAddr) throws IOException;
 	
-	/**
-	 * 唤醒卡片
-	 * @return
-	 */
-	StatusCode wakeupCard() throws IOException;
-	
-	/**
-	 * 命令卡片进入休眠状态
-	 * @return
-	 */
-	StatusCode haltCard();
-	
-	/**
-	 * 退出验证状态
-	 */
-	void stopCrypto1();
-
-	/**
-	 * 复位设备
-	 */
 	boolean resetDevice();
 	
 	String getDeviceNumber();

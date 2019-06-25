@@ -43,8 +43,7 @@ public class LocalClientImpl extends WebSocketClient implements LocalClient {
 		try {
 			Thread.sleep(1000);
 			MsgResult sendData=new MsgResult(toService, CodeEnum.UPDATE_IDENTITY_INFOR.getCode(), CodeEnum.UPDATE_IDENTITY_INFOR.getMsg());
-			String sendString=JSON.toJSONString(sendData);
-			send(sendString);
+			sendMessage(sendData);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -61,9 +60,8 @@ public class LocalClientImpl extends WebSocketClient implements LocalClient {
 		backMsgRoute.setTo(acceptData.getMsgRoute().getFrom());
 		
 		int code=acceptData.getCode();
-		if (code== CodeEnum.GET_USERINFOR_SUCCEDSS.getCode()){//用户识别成功
-			//命令卡片休眠
-			deviceCenter.haltCard();
+		//用户识别成功
+		if (code== CodeEnum.GET_USERINFOR_SUCCEDSS.getCode()){
 			deviceCenter.openDoor(isSuccessed -> {
 				MsgResult sendData;
 				if (isSuccessed){
@@ -71,23 +69,22 @@ public class LocalClientImpl extends WebSocketClient implements LocalClient {
 				}else {
 					sendData=new MsgResult(toAdmin,CodeEnum.OPENDOOR_DEFAULT.getCode(),CodeEnum.OPENDOOR_DEFAULT.getMsg());
 				}
-				String sendString=JSON.toJSONString(sendData);
-				send(sendString);
+				sendMessage(sendData);
 			});
-		}else if (code== CodeEnum.UPDATE_CARD.getCode()){//读卡片指令
-			//寻找一张卡
+			return;
+		}
+		//读卡片指令
+		if (code== CodeEnum.UPDATE_CARD.getCode()){
+			//寻找一次
 			UserCard userCard=deviceCenter.searchCardOneTime();
-			if (userCard!=null)//命令卡片休眠
-				deviceCenter.haltCard();
 			sendUserCardToAdmin(userCard);
-			
-			//重新开启自动寻卡功能
 			deviceCenter.startAutoSearchCard(userCard1 -> {
-				//识别用户身份
 				getUserByUserCard(userCard);
 			});
-			
-		}else if (code== CodeEnum.OPENDOOR.getCode()){//开门
+			return;
+		}
+		//开门
+		if (code== CodeEnum.OPENDOOR.getCode()){
 			deviceCenter.openDoor(isSuccessed -> {
 				MsgResult sendData;
 				if(isSuccessed){
@@ -95,10 +92,12 @@ public class LocalClientImpl extends WebSocketClient implements LocalClient {
 				}else {
 					sendData=new MsgResult(toAdmin, CodeEnum.OPENDOOR_DEFAULT.getCode(), CodeEnum.OPENDOOR_DEFAULT.getMsg());
 				}
-				String sendString=JSON.toJSONString(sendData);
-				send(sendString);
+				sendMessage(sendData);
 			});
-		}else if (code== CodeEnum.CLOSEDOOR.getCode()){//关门
+			return;
+		}
+		//关门
+		if (code== CodeEnum.CLOSEDOOR.getCode()){
 			deviceCenter.closeDoor(isSuccessed -> {
 				MsgResult sendData;
 				if (isSuccessed){
@@ -106,16 +105,12 @@ public class LocalClientImpl extends WebSocketClient implements LocalClient {
 				}else {
 					sendData=new MsgResult(toAdmin, CodeEnum.CLOSEDOOR_DEFAULT.getCode(), CodeEnum.CLOSEDOOR_DEFAULT.getMsg());
 				}
-				String sendString=JSON.toJSONString(sendData);
-				send(sendString);
+				sendMessage(sendData);
 			});
-		}else if (code==CodeEnum.UPDATE_IDENTITY_INFOR_SUCCESS.getCode()){//与服务器连接成功并进行了身份验证
-			//开启自动寻卡功能
-			deviceCenter.startAutoSearchCard(userCard -> {
-				//识别用户身份
-				getUserByUserCard(userCard);
-			});
-			//设置自动开关门监听
+			return;
+		}
+		//与服务器连接成功并进行了身份验证
+		if (code==CodeEnum.UPDATE_IDENTITY_INFOR_SUCCESS.getCode()){
 			deviceCenter.setAutoOpenOrCloseListener(isSuccessed -> {
 				MsgResult sendData;
 				if(isSuccessed){
@@ -123,48 +118,44 @@ public class LocalClientImpl extends WebSocketClient implements LocalClient {
 				}else {
 					sendData=new MsgResult(toAdmin, CodeEnum.OPENDOOR_DEFAULT.getCode(), CodeEnum.OPENDOOR_DEFAULT.getMsg());
 				}
-				String sendString=JSON.toJSONString(sendData);
-				send(sendString);
+				sendMessage(sendData);
 			}, isSuccessed -> {
 				MsgResult sendData;
 				if(isSuccessed){
-					sendData=new MsgResult(toAdmin, CodeEnum.OPENDOOR_SUCCESS.getCode(), CodeEnum.OPENDOOR_SUCCESS.getMsg());
+					sendData=new MsgResult(toAdmin, CodeEnum.CCLOSEDOOR_SUCCESS.getCode(), CodeEnum.CCLOSEDOOR_SUCCESS.getMsg());
 				}else {
-					sendData=new MsgResult(toAdmin, CodeEnum.OPENDOOR_DEFAULT.getCode(), CodeEnum.OPENDOOR_DEFAULT.getMsg());
+					sendData=new MsgResult(toAdmin, CodeEnum.CLOSEDOOR_DEFAULT.getCode(), CodeEnum.CLOSEDOOR_DEFAULT.getMsg());
 				}
-				String sendString=JSON.toJSONString(sendData);
-				send(sendString);
+				sendMessage(sendData);
 			});
-			//开始采集环境数据
+			deviceCenter.startAutoSearchCard(userCard -> {
+				getUserByUserCard(userCard);
+			});
 			startCollectEnvirData();
-		}else if (code== CodeEnum.RESET_DEVICE.getCode()){//复位设备
+			return;
+		}
+		//复位设备
+		if (code== CodeEnum.RESET_DEVICE.getCode()){
+			stopCollectEnvirData();
 			MsgResult sendData;
 			if (deviceCenter.resetDevice()){
-				//开启自动寻卡功能
-				deviceCenter.startAutoSearchCard(userCard -> {
-					//识别用户身份
-					getUserByUserCard(userCard);
-				});
+				deviceCenter.startAutoSearchCard(userCard -> { getUserByUserCard(userCard);});
 				sendData=new MsgResult(toAdmin, CodeEnum.RESET_DEVICE_SUCCESS.getCode(), CodeEnum.RESET_DEVICE_SUCCESS.getMsg());
 			}else {
 				sendData=new MsgResult(toAdmin, CodeEnum.RESET_DEVICE_DEFAULT.getCode(), CodeEnum.RESET_DEVICE_DEFAULT.getMsg());
 			}
-			String sendString=JSON.toJSONString(sendData);
-			send(sendString);
-		}else if (code== CodeEnum.CLEAN_LOG.getCode()){//清理日志
-			MsgResult sendData;
-			if (LogUtil.cleanLogData()){
-				sendData=new MsgResult(toAdmin, CodeEnum.CLEAN_LOG_SUCCESS.getCode(), CodeEnum.CLEAN_LOG_SUCCESS.getMsg());
-			}else {
-				sendData=new MsgResult(toAdmin, CodeEnum.CLEAN_LOG_DEFAULT.getCode(), CodeEnum.CLEAN_LOG_DEFAULT.getMsg());
-			}
-			String sendString=JSON.toJSONString(sendData);
-			send(sendString);
+			sendMessage(sendData);
+			startCollectEnvirData();
+			return;
+		}
+		//清理日志
+		if (code== CodeEnum.CLEAN_LOG.getCode()){
+			cleanMemory();
 		}else if (code== CodeEnum.UPDATA_DOOR_STATE.getCode()){//上传门禁状态信息
 			sendStateDate(backMsgRoute);
 		}else if (code== CodeEnum.UPDATE_ENVIRODATE.getCode()){//上传环境数据
 			sendEnvironmentDate(backMsgRoute);
-		}else if (code== CodeEnum.UPDATE_IDENTITY_INFOR.getCode()){//上传设备信息
+		}else if (code== CodeEnum.UPDATE_DEVICE_INFOR.getCode()){//上传设备信息
 			sendDeviceInfor(backMsgRoute);
 		}
 	}
@@ -179,6 +170,19 @@ public class LocalClientImpl extends WebSocketClient implements LocalClient {
 		stopCollectEnvirData();
 		deviceCenter.stopAutoSearchCard();
 		deviceCenter.setAutoOpenOrCloseListener(null,null);
+//		new Thread(new Runnable() {
+//			@Override
+//			public void run() {
+//				while (isClosed()){
+//					connect();
+//					try {
+//						Thread.sleep(1000);
+//					} catch (InterruptedException e) {
+//						e.printStackTrace();
+//					}
+//				}
+//			}
+//		}).start();
 	}
 
 	/**
@@ -195,8 +199,7 @@ public class LocalClientImpl extends WebSocketClient implements LocalClient {
 	 */
 	private void getUserByUserCard(UserCard userCard) {
 		MsgResult sendData=new MsgResult(toService, CodeEnum.GET_USERINFOR.getCode(), CodeEnum.GET_USERINFOR.getMsg(),userCard);
-		String sendString=JSON.toJSONString(sendData);
-		send(sendString);
+		sendMessage(sendData);
 	}
 	
 	/**
@@ -229,7 +232,21 @@ public class LocalClientImpl extends WebSocketClient implements LocalClient {
 	public void disConnect() {
 		close();
 	}
-	
+	//////////////////////////////////////////实现来自MyNetService的接口结束/////////////////////////////////////////////////
+
+	/**
+	 * 清理内存
+	 */
+	private void cleanMemory(){
+		MsgResult sendData;
+		if (LogUtil.cleanLogData()){
+			sendData=new MsgResult(toAdmin, CodeEnum.CLEAN_LOG_SUCCESS.getCode(), CodeEnum.CLEAN_LOG_SUCCESS.getMsg());
+		}else {
+			sendData=new MsgResult(toAdmin, CodeEnum.CLEAN_LOG_DEFAULT.getCode(), CodeEnum.CLEAN_LOG_DEFAULT.getMsg());
+		}
+		sendMessage(sendData);
+	}
+
 	/**
 	 * 发送卡片号给管理，此函数一般在管理员添加新用户时
 	 * @param userCard
@@ -242,8 +259,7 @@ public class LocalClientImpl extends WebSocketClient implements LocalClient {
 		}else {
 			sendData=new MsgResult(toAdmin, CodeEnum.UPDATE_CARD_DEFAULT.getCode(), CodeEnum.UPDATE_CARD_DEFAULT.getMsg());
 		}
-		String sendString=JSON.toJSONString(sendData);
-		send(sendString);
+		sendMessage(sendData);
 	}
 	
 	/**
@@ -259,27 +275,29 @@ public class LocalClientImpl extends WebSocketClient implements LocalClient {
 		}else {
 			sendData=new MsgResult(msgRoute, CodeEnum.UPDATE_ENVIRODATE_DEFAULT.getCode(), CodeEnum.UPDATE_ENVIRODATE_DEFAULT.getMsg());
 		}
-		String sendString=JSON.toJSONString(sendData);
-		send(sendString);
+		sendMessage(sendData);
 	}
 
 	/**
 	 * 自动采集环境数据并上传，30分钟采集一次。
 	 */
 	private void startCollectEnvirData(){
-		if (isContinueCollectEnviroData||collectThread!=null)
+		if (isContinueCollectEnviroData)
 			return;
 		isContinueCollectEnviroData=true;
+		
+		if (collectThread!=null&&collectThread.isAlive())
+			return;
 		collectThread=new Thread(() -> {
 			while (isContinueCollectEnviroData){
-				sendEnvironmentDate(toService);
-				sendEnvironmentDate(toAdmin);
 				try {
 					Thread.sleep(1800000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 					isContinueCollectEnviroData=false;
 				}
+				sendEnvironmentDate(toService);
+				sendEnvironmentDate(toAdmin);
 			}
 		});
 		collectThread.start();
@@ -290,10 +308,6 @@ public class LocalClientImpl extends WebSocketClient implements LocalClient {
 	 */
 	private void stopCollectEnvirData(){
 		isContinueCollectEnviroData=false;
-		if (collectThread!=null&&collectThread.isAlive()){
-			collectThread.interrupt();
-			collectThread=null;
-		}
 	}
 	
 	/**
@@ -308,8 +322,7 @@ public class LocalClientImpl extends WebSocketClient implements LocalClient {
 		}else {
 			sendData=new MsgResult(msgRoute, CodeEnum.UPDATE_DOOR_STATE_DEFAULT.getCode(), CodeEnum.UPDATE_DOOR_STATE_DEFAULT.getMsg());
 		}
-		String sendString=JSON.toJSONString(sendData);
-		send(sendString);
+		sendMessage(sendData);
 	}
 	
 	/**
@@ -323,7 +336,11 @@ public class LocalClientImpl extends WebSocketClient implements LocalClient {
 		}else {
 			sendData=new MsgResult(msgRoute, CodeEnum.UPDATE_DEVICE_INFOR_DEFAULT.getCode(), CodeEnum.UPDATE_DEVICE_INFOR_DEFAULT.getMsg());
 		}
-		String sendString=JSON.toJSONString(sendData);
+		sendMessage(sendData);
+	}
+	
+	private void sendMessage(MsgResult msgResult){
+		String sendString=JSON.toJSONString(msgResult);
 		send(sendString);
 	}
 	

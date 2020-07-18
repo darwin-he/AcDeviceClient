@@ -33,7 +33,7 @@ public class ControlCenterImpl implements ControlCenter {
 	private TouchSensorImpl touchSensor;
 
 	private GratingSensorPin gratingSensorPin;
-	private RestPin restPin;
+	private RestPin rfidResetPin;
 	private StepperMotorPin stepperMotorPin;
 	private TouchSensorPin touchSensorPin;
 	
@@ -43,12 +43,12 @@ public class ControlCenterImpl implements ControlCenter {
 	
 	public ControlCenterImpl() throws IOException {
 		gratingSensorPin =new GratingSensorPin(RaspiPin.GPIO_25);
-		restPin =new RestPin(RaspiPin.GPIO_06);
-		stepperMotorPin=new StepperMotorPin(RaspiPin.GPIO_00,RaspiPin.GPIO_02,RaspiPin.GPIO_03,RaspiPin.GPIO_04);
+		rfidResetPin =new RestPin(RaspiPin.GPIO_06);
+		stepperMotorPin=new StepperMotorPin(RaspiPin.GPIO_00, RaspiPin.GPIO_02,RaspiPin.GPIO_03,RaspiPin.GPIO_04);
 		touchSensorPin=new TouchSensorPin(RaspiPin.GPIO_05);
 		
 		graSensorModule=new GratingSensorImpl(gratingSensorPin);
-		myRfid=new MyRfidReaderImpl(restPin);
+		myRfid=new MyRfidReaderImpl(rfidResetPin);
 		stepperMotor=new StepperMotorImpl(stepperMotorPin);
 		touchSensor=new TouchSensorImpl(touchSensorPin);
 		//开启开门检测

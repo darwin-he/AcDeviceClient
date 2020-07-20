@@ -18,7 +18,7 @@ import java.net.URISyntaxException;
 
 public class ACDevice {
     
-    private static final String SERVICE_ADDR ="http://192.168.191.1:8080/LocalService";
+    private static final String SERVICE_ADDR ="http://192.168.1.107:8080/LocalService";
     
     public static void main(String args[]) throws IOException {
         final Console console = new Console();
@@ -39,7 +39,7 @@ public class ACDevice {
         DeviceService deviceService= new DeviceServiceImpl(uri);
         deviceService.start(controlCenter);
 
-        console.println("<-- The ACCilent Application -->", "started");
+        console.println("<-- The ACCilent Application -->", "Started");
         while (console.isRunning()){
           //Do something
         }

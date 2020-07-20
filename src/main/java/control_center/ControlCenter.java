@@ -18,27 +18,29 @@ public interface ControlCenter {
 	/**
 	 * 开门
 	 */
-	void openDoor(OnTurned back);
+	void openDoor(OnTurned onOpened,OnTurned onClosed);
 
 	/**
 	 * 关门
 	 */
 	void closeDoor(OnTurned back);
-	
-	//监听非命令控制的开关门
-	void setDoorListener(OnTurned autoOpen, OnTurned autoClose);
 
 	/**
 	 * 手动寻卡一次，时间限制为8秒，执行此函数会关闭自动寻卡，需要重新启动自动寻卡功能。
 	 * @return
 	 */
 	UserCard searchCardOnce();
-	
+
+	void enableHumanHandle(OnTurned onOpened, OnTurned onClosed);
+
+	void forbidHumanHandle();
+
 	/**
 	 * 开启自动寻卡
-	 * @param autoSearchBack  寻卡成功时的回调函数
+	 * @param outsideRfidSearchBack 寻到卡片后的回调函数
+	 * @param insideRfidSearchBack 寻到卡片后的回调函数
 	 */
-	void startAutoSearchCard(AutoSearchBack autoSearchBack);
+	void startAutoSearchCard(AutoSearchBack outsideRfidSearchBack, AutoSearchBack insideRfidSearchBack);
 	
 	/**
 	 * 停止自动寻卡
@@ -61,7 +63,7 @@ public interface ControlCenter {
 	 */
 	byte[] readBlockDataFromCard(byte blockAddr) throws IOException;
 	
-	boolean reset();
+	void reset();
 	
 	String getDeviceNumber();
 	

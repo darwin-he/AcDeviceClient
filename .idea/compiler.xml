@@ -6,9 +6,11 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="AcDeviceClient" />
-        <module name="deviceclient" />
+        <module name="acdevice" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="acdevice" target="8" />
+    </bytecodeTargetLevel>
   </component>
 </project>

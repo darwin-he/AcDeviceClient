@@ -1,0 +1,17 @@
+<component name="ArtifactManager">
+  <artifact name="acdevice:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/acdevice_jar</output-path>
+    <root id="root">
+      <element id="archive" name="acdevice.jar">
+        <element id="directory" name="META-INF">
+          <element id="file-copy" path="$PROJECT_DIR$/src/main/java/resources/META-INF/MANIFEST.MF" />
+        </element>
+        <element id="module-output" name="acdevice" />
+      </element>
+      <element id="library" level="project" name="Maven: com.pi4j:pi4j-core:1.2" />
+      <element id="library" level="project" name="Maven: org.java-websocket:Java-WebSocket:1.3.8" />
+      <element id="library" level="project" name="Maven: com.alibaba:fastjson:1.2.57" />
+      <element id="library" level="project" name="Maven: net.sf.trove4j:core:3.1.0" />
+    </root>
+  </artifact>
+</component>

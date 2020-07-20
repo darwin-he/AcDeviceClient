@@ -9,12 +9,13 @@ import com.pi4j.io.gpio.event.GpioPinListenerDigital;
  */
 public class TouchSensorImpl implements TouchSensor {
 
-    private GpioPinDigitalInput touchSensorDigitalPin;
+    private GpioPinDigitalInput gpio;
+    private GpioPinListenerDigital listener;
 
     public TouchSensorImpl(TouchSensorPin touchSensorPin){
         GpioController gpioController= GpioFactory.getInstance();
-        touchSensorDigitalPin=gpioController.provisionDigitalInputPin(touchSensorPin.getPin(),"TouchSensor", PinPullResistance.PULL_DOWN);
-        touchSensorDigitalPin.setShutdownOptions(true, PinState.LOW);
+        gpio =gpioController.provisionDigitalInputPin(touchSensorPin.getPin(),"TouchSensor", PinPullResistance.PULL_DOWN);
+        gpio.setShutdownOptions(true, PinState.LOW);
     }
 
     /**
@@ -23,10 +24,13 @@ public class TouchSensorImpl implements TouchSensor {
      */
     @Override
     public void setListener(GpioPinListenerDigital listener) {
-        touchSensorDigitalPin.removeAllListeners();
-        if (listener != null) {
-            touchSensorDigitalPin.addListener(listener);
+        if (this.listener != null) {
+            gpio.removeListener(this.listener);
         }
+        if (listener != null) {
+            gpio.addListener(listener);
+        }
+        this.listener = listener;
     }
 
     /**
@@ -34,7 +38,7 @@ public class TouchSensorImpl implements TouchSensor {
      */
     @Override
     public PinState getState() {
-        return touchSensorDigitalPin.getState();
+        return gpio.getState();
     }
     
 }

@@ -8,7 +8,8 @@ import com.pi4j.io.gpio.*;
 import com.pi4j.io.gpio.event.GpioPinListenerDigital;
 
 public class GratingSensorImpl implements GratingSensor {
-    
+    private GpioPinListenerDigital listener;
+
     private GpioPinDigitalInput gpio;
     
     /**
@@ -35,20 +36,13 @@ public class GratingSensorImpl implements GratingSensor {
      */
     @Override
     public void setListener(GpioPinListenerDigital listener) {
-        if (listener!=null){
-            gpio.removeAllListeners();
-            gpio.addListener(listener);
-        }else {
-            gpio.removeAllListeners();
+        if (this.listener != null) {
+            gpio.removeListener(this.listener);
         }
+        if (listener != null) {
+            gpio.addListener(listener);
+        }
+        this.listener = listener;
     }
 
-    public void cleanListener() {
-        gpio.removeAllListeners();
-    }
-
-    public void addListener(GpioPinListenerDigital listener) {
-        gpio.addListener(listener);
-    }
-    
 }

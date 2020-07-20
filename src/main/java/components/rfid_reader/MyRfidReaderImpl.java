@@ -25,10 +25,12 @@ public class MyRfidReaderImpl implements MyRfidReader {
     
     private boolean isSearching;
 
+    private OnSearchedCard onSearchedCard;
+
     private final GpioPinDigitalOutput resetPin;
 
-    public MyRfidReaderImpl(RestPin restPin) throws IOException {
-        SpiDevice spiDevice= SpiFactory.getInstance(SpiChannel.CS0,//树莓派对应的spi片选通道
+    public MyRfidReaderImpl(RestPin restPin, SpiChannel spiChannel) throws IOException {
+        SpiDevice spiDevice= SpiFactory.getInstance(spiChannel,//树莓派对应的spi片选通道
                 SpiDevice.DEFAULT_SPI_SPEED, // default spi speed 1 MHz
                 SpiDevice.DEFAULT_SPI_MODE); // default spi mode 0
         GpioController controller= GpioFactory.getInstance();
@@ -64,7 +66,7 @@ public class MyRfidReaderImpl implements MyRfidReader {
         if (isSearching){
             isSearching =false;
             try {
-                Thread.sleep(500);
+                Thread.sleep(600);
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 return null;
@@ -96,6 +98,7 @@ public class MyRfidReaderImpl implements MyRfidReader {
      */
     @Override
     public void startAutoSearch(OnSearchedCard onSearchedCard) {
+        this.onSearchedCard = onSearchedCard;
         if (isSearching) return;
         isSearching =true;
         new Thread(() -> {
@@ -105,7 +108,9 @@ public class MyRfidReaderImpl implements MyRfidReader {
                     UID uid=anticollAndSelect();
                     if (uid != null){
                         haltCard();
-                        onSearchedCard.onSearchedCard(uid);
+                        if (this.onSearchedCard != null) {
+                            this.onSearchedCard.onSearchedCard(uid);
+                        }
                     }
                 }
                 try {
@@ -125,6 +130,11 @@ public class MyRfidReaderImpl implements MyRfidReader {
     @Override
     public void stopAutoSearch() {
         isSearching =false;
+        try {
+            Thread.sleep(600);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     /**

@@ -7,6 +7,12 @@ package device_service.dto;
 public class UserCard {
     private String userCard;
 
+    public UserCard(){}
+
+    public UserCard(String userCard) {
+        this.userCard = userCard;
+    }
+
     public String getUserCard() {
         return userCard;
     }

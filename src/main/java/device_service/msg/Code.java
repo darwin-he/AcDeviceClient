@@ -39,7 +39,7 @@ public enum Code {
     ACCEPT_PUSHMSG(28,"推送消息！"),
     CHECK_USERINFO(30,"获取用户信息！"),
     CHECK_USERINFO_DEFAULT(31,"获取用户信息失败！"),
-    CHECK_USERINFO_SUCCEDSS(32,"获取用户信息成功！"),
+    CHECK_USERINFO_SUCCESS(32,"获取用户信息成功！"),
     UPLOAD_DEVICE_INFO(33,"上传设备信息！"),
     UPLOAD_DEVICE_INFO_SUCCESS(34,"上传设备信息成功！"),
     UPLOAD_DEVICE_INFO_DEFAULT(35,"上传设备信息失败！");

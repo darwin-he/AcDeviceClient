@@ -8,6 +8,7 @@ public class Handle {
     public Handle(UserCard userCard, String handle, String deviceNumber) {
         this.userCard = userCard;
         this.handle = handle;
+        this.deviceNumber = deviceNumber;
     }
 
     public UserCard getUserCard() {

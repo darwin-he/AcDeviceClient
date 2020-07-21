@@ -16,7 +16,7 @@ public class Message {
     
     private String msg = Code.SUCCESS.getDesc();
     
-    private Object data = "";
+    private String data = "";
     
     public Message() {}
 
@@ -24,14 +24,14 @@ public class Message {
         this(route,code, msg, "");
     }
 
-    public Message(Route route, int code, String msg, Object data) {
+    public Message(Route route, int code, String msg, String data) {
         this.route = route;
         this.code = code;
         this.msg = msg;
         this.data = data;
     }
 
-    public Message(Route route, Code code, Object data) {
+    public Message(Route route, Code code, String data) {
         this.route = route;
         this.code = code.getCode();
         this.msg = code.getDesc();
@@ -61,11 +61,11 @@ public class Message {
         this.msg = msg;
     }
     
-    public Object getData() {
+    public String getData() {
         return data;
     }
     
-    public void setData(Object data) {
+    public void setData(String data) {
         this.data = data;
     }
     

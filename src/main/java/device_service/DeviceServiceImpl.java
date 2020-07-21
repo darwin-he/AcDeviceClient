@@ -1,13 +1,14 @@
 package device_service;
 
+import control_center.AutoSearchBack;
 import control_center.ControlCenter;
 import device_service.dto.*;
 import device_service.msg.Code;
 import device_service.msg.Message;
 import device_service.msg.Route;
-import com.alibaba.fastjson.JSON;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
+import utils.JsonUtil;
 import utils.LogUtil;
 
 import java.net.URI;
@@ -19,7 +20,6 @@ import java.net.URI;
 public class DeviceServiceImpl extends WebSocketClient implements DeviceService {
     //消息路由
     private Route toService;
-    private Route toAdmin;
 
     //硬件控制中心
     private ControlCenter controlCenter;
@@ -47,14 +47,37 @@ public class DeviceServiceImpl extends WebSocketClient implements DeviceService 
         toService.setTo("LocalService");
         toService.setFrom("D" + controlCenter.getDeviceNumber());
 
-        toAdmin = new Route();
-        toAdmin.setFrom("D"+controlCenter.getDeviceNumber());
-        toAdmin.setTo("A"+controlCenter.getDeviceNumber());
+        controlCenter.enableHumanHandle(isSucceed -> {
+            if (isClosed()) return;
+            Message sendData;
+            Handle handle = new Handle(new UserCard("钥匙"), "进", controlCenter.getDeviceNumber());
+            if (isSucceed) {
+                sendData = new Message(toService, Code.OPENDOOR_SUCCESS);
+            } else {
+                sendData = new Message(toService, Code.OPENDOOR_DEFAULT);
+            }
+            sendData.setData(JsonUtil.toJsonStr(handle));
+            sendMessage(sendData);
+        }, isSucceed -> {
+            if (isClosed()) return;
+            Message sendData;
+            if (isSucceed) {
+                sendData = new Message(toService, Code.CCLOSEDOOR_SUCCESS);
+            } else {
+                sendData = new Message(toService, Code.CLOSEDOOR_DEFAULT);
+            }
+            sendMessage(sendData);
+        });
 
-        controlCenter.enableHumanHandle(null, null);
-
-        controlCenter.startAutoSearchCard(userCard -> controlCenter.openDoor(null, null),
-                userCard -> controlCenter.openDoor(null, null));
+        controlCenter.startAutoSearchCard(userCard -> {
+            if (isClosed()) return;
+            Handle handle = new Handle(userCard, "进", controlCenter.getDeviceNumber());
+            checkUserInfoOnOpenDoor(handle);
+        }, userCard -> {
+            if (isClosed()) return;
+            Handle handle = new Handle(userCard, "出", controlCenter.getDeviceNumber());
+            checkUserInfoOnOpenDoor(handle);
+        });
 
         connect();
     }
@@ -103,11 +126,11 @@ public class DeviceServiceImpl extends WebSocketClient implements DeviceService 
      * @param msg
      */
     public void onMessage(String msg) {
-        Message message = JSON.parseObject(msg).toJavaObject(Message.class);
+        Message message = JsonUtil.toJavaBean(msg, Message.class);
         Route backRoute = overturnRoute(message.getRoute());
         int code = message.getCode();
         //用户识别成功
-        if (code == Code.CHECK_USERINFO_SUCCEDSS.getCode()) {
+        if (code == Code.CHECK_USERINFO_SUCCESS.getCode()) {
             onUserCheckedToOpenDoor(message);
             return;
         }
@@ -166,8 +189,6 @@ public class DeviceServiceImpl extends WebSocketClient implements DeviceService 
      */
     public void onClose(int i, String s, boolean b) {
         stopCollectEnviroData();
-        controlCenter.enableHumanHandle(null, null);
-        controlCenter.startAutoSearchCard(userCard -> controlCenter.openDoor(null, null), userCard -> controlCenter.openDoor(null, null));
         new Thread(() -> {
             while (isClosed()) {
                 reconnect();
@@ -194,34 +215,6 @@ public class DeviceServiceImpl extends WebSocketClient implements DeviceService 
      * 设备身份验证通过时响应函数
      */
     private void onDeviceAuthPassed() {
-        controlCenter.enableHumanHandle(isSucceed -> {
-            Message sendData;
-            Handle handle = new Handle(new UserCard("钥匙"), "进", controlCenter.getDeviceNumber());
-            if (isSucceed) {
-                sendData = new Message(toService, Code.OPENDOOR_SUCCESS);
-            } else {
-                sendData = new Message(toService, Code.OPENDOOR_DEFAULT);
-            }
-            sendData.setData(handle);
-            sendMessage(sendData);
-        }, isSucceed -> {
-            Message sendData;
-            if (isSucceed) {
-                sendData = new Message(toService, Code.CCLOSEDOOR_SUCCESS);
-            } else {
-                sendData = new Message(toService, Code.CLOSEDOOR_DEFAULT);
-            }
-            sendMessage(sendData);
-        });
-
-        controlCenter.startAutoSearchCard(userCard -> {
-            Handle handle = new Handle(userCard, "进", controlCenter.getDeviceNumber());
-            checkUserInfoOnOpenDoor(handle);
-        }, userCard -> {
-            Handle handle = new Handle(userCard, "出", controlCenter.getDeviceNumber());
-            checkUserInfoOnOpenDoor(handle);
-        });
-
         startCollectEnviroData();
     }
 
@@ -231,13 +224,13 @@ public class DeviceServiceImpl extends WebSocketClient implements DeviceService 
      * @param message
      */
     private void onUserCheckedToOpenDoor(Message message) {
-        Handle handle = (Handle) message.getData();
+        Handle handle = JsonUtil.toJavaBean(message.getData(), Handle.class);
         controlCenter.openDoor(isSucceed -> {
             Message sendData;
             if (isSucceed) {
-                sendData = new Message(toService, Code.OPENDOOR_SUCCESS, handle);
+                sendData = new Message(toService, Code.OPENDOOR_SUCCESS, JsonUtil.toJsonStr(handle));
             } else {
-                sendData = new Message(toService, Code.OPENDOOR_DEFAULT, handle);
+                sendData = new Message(toService, Code.OPENDOOR_DEFAULT, JsonUtil.toJsonStr(handle));
             }
             sendMessage(sendData);
         }, isSucceed -> {
@@ -255,10 +248,11 @@ public class DeviceServiceImpl extends WebSocketClient implements DeviceService 
         controlCenter.forbidHumanHandle();
 
         //searchCardOnce()函数会禁用自动寻卡功能
-        UserCard userCard = controlCenter.searchCardOnce();
-        sendUserCardToAdmin(backRoute, userCard);
+        UserCard card = controlCenter.searchCardOnce();
+        sendUserCardToAdmin(backRoute, card);
 
         controlCenter.enableHumanHandle(isSucceed -> {
+            if (isClosed()) return;
             Message sendData;
             Handle handle = new Handle(new UserCard("钥匙"), "进", controlCenter.getDeviceNumber());
             if (isSucceed) {
@@ -266,9 +260,10 @@ public class DeviceServiceImpl extends WebSocketClient implements DeviceService 
             } else {
                 sendData = new Message(toService, Code.OPENDOOR_DEFAULT);
             }
-            sendData.setData(handle);
+            sendData.setData(JsonUtil.toJsonStr(handle));
             sendMessage(sendData);
         }, isSucceed -> {
+            if (isClosed()) return;
             Message sendData;
             if (isSucceed) {
                 sendData = new Message(toService, Code.CCLOSEDOOR_SUCCESS);
@@ -278,18 +273,20 @@ public class DeviceServiceImpl extends WebSocketClient implements DeviceService 
             sendMessage(sendData);
         });
 
-        controlCenter.startAutoSearchCard(userCard1 -> {
-            Handle handle = new Handle(userCard1, "进", controlCenter.getDeviceNumber());
+        controlCenter.startAutoSearchCard(userCard -> {
+            if (isClosed()) return;
+            Handle handle = new Handle(userCard, "进", controlCenter.getDeviceNumber());
             checkUserInfoOnOpenDoor(handle);
-        }, userCard12 -> {
-            Handle handle = new Handle(userCard12, "出", controlCenter.getDeviceNumber());
+        }, userCard -> {
+            if (isClosed()) return;
+            Handle handle = new Handle(userCard, "出", controlCenter.getDeviceNumber());
             checkUserInfoOnOpenDoor(handle);
         });
     }
 
     private void openDoorCommand(Message message) {
         Route backRoute = overturnRoute(message.getRoute());
-        Handle handle = (Handle) message.getData();
+        String  handle = message.getData();
         controlCenter.openDoor(isSucceed -> {
             Message sendData;
             if (isSucceed) {
@@ -324,9 +321,11 @@ public class DeviceServiceImpl extends WebSocketClient implements DeviceService 
 
     private void resetDeviceCommand(Route backRoute) {
         stopCollectEnviroData();
+
         controlCenter.reset();
 
         controlCenter.enableHumanHandle(isSucceed -> {
+            if (isClosed()) return;
             Message sendData;
             Handle handle = new Handle(new UserCard("钥匙"), "进", controlCenter.getDeviceNumber());
             if (isSucceed) {
@@ -334,9 +333,10 @@ public class DeviceServiceImpl extends WebSocketClient implements DeviceService 
             } else {
                 sendData = new Message(toService, Code.OPENDOOR_DEFAULT);
             }
-            sendData.setData(handle);
+            sendData.setData(JsonUtil.toJsonStr(handle));
             sendMessage(sendData);
         }, isSucceed -> {
+            if (isClosed()) return;
             Message sendData;
             if (isSucceed) {
                 sendData = new Message(toService, Code.CCLOSEDOOR_SUCCESS);
@@ -347,17 +347,19 @@ public class DeviceServiceImpl extends WebSocketClient implements DeviceService 
         });
 
         controlCenter.startAutoSearchCard(userCard -> {
+            if (isClosed()) return;
             Handle handle = new Handle(userCard, "进", controlCenter.getDeviceNumber());
             checkUserInfoOnOpenDoor(handle);
         }, userCard -> {
+            if (isClosed()) return;
             Handle handle = new Handle(userCard, "出", controlCenter.getDeviceNumber());
             checkUserInfoOnOpenDoor(handle);
         });
 
-        startCollectEnviroData();
-
         Message sendData = new Message(backRoute, Code.RESET_DEVICE_SUCCESS);
         sendMessage(sendData);
+
+        startCollectEnviroData();
     }
 
     /**
@@ -380,12 +382,8 @@ public class DeviceServiceImpl extends WebSocketClient implements DeviceService 
      */
     private void uploadEnvironmentDateCommand(Route route) {
         EnviroInfo enviroInfo = controlCenter.getEnviroDate();
-        Message sendData;
-        if (enviroInfo != null) {
-            sendData = new Message(route, Code.UPLOAD_ENVIRODATE_SUCCESS, enviroInfo);
-        } else {
-            sendData = new Message(route, Code.UPLOAD_ENVIRODATE_DEFAULT);
-        }
+        if (enviroInfo == null) return;
+        Message sendData = new Message(route, Code.UPLOAD_ENVIRODATE, JsonUtil.toJsonStr(enviroInfo));
         sendMessage(sendData);
     }
 
@@ -396,12 +394,8 @@ public class DeviceServiceImpl extends WebSocketClient implements DeviceService 
      */
     private void uploadDeviceStateCommand(Route route) {
         DeviceState stateDate = controlCenter.getDeviceStateDate();
-        Message sendData;
-        if (stateDate != null) {
-            sendData = new Message(route, Code.UPLOAD_DOOR_STATE_SUCCESS, stateDate);
-        } else {
-            sendData = new Message(route, Code.UPLOAD_DOOR_STATE_DEFAULT);
-        }
+        if (stateDate == null) return;
+        Message sendData = new Message(route, Code.UPLOAD_DOOR_STATE, JsonUtil.toJsonStr(stateDate));
         sendMessage(sendData);
     }
 
@@ -410,12 +404,8 @@ public class DeviceServiceImpl extends WebSocketClient implements DeviceService 
      */
     private void uploadDeviceInfoCommand(Route route) {
         DeviceInfo deviceInfo = controlCenter.getDeviceInfor();
-        Message sendData;
-        if (deviceInfo != null) {
-            sendData = new Message(route, Code.UPLOAD_DEVICE_INFO_SUCCESS, deviceInfo);
-        } else {
-            sendData = new Message(route, Code.UPLOAD_DEVICE_INFO_DEFAULT);
-        }
+        if (deviceInfo == null) return;
+        Message sendData = new Message(route, Code.UPLOAD_DEVICE_INFO, JsonUtil.toJsonStr(deviceInfo));
         sendMessage(sendData);
     }
 
@@ -444,7 +434,7 @@ public class DeviceServiceImpl extends WebSocketClient implements DeviceService 
     private void sendUserCardToAdmin(Route backRoute, UserCard userCard) {
         Message sendData;
         if (userCard != null) {
-            sendData = new Message(backRoute, Code.UPLOAD_CARD_SUCCESS, userCard);
+            sendData = new Message(backRoute, Code.UPLOAD_CARD_SUCCESS, JsonUtil.toJsonStr(userCard));
         } else {
             sendData = new Message(backRoute, Code.UPLOAD_CARD_DEFAULT);
         }
@@ -457,7 +447,7 @@ public class DeviceServiceImpl extends WebSocketClient implements DeviceService 
      * @param handle 用户操作信息
      */
     private void checkUserInfoOnOpenDoor(Handle handle) {
-        Message sendData = new Message(toService, Code.CHECK_USERINFO, handle);
+        Message sendData = new Message(toService, Code.CHECK_USERINFO, JsonUtil.toJsonStr(handle));
         sendMessage(sendData);
     }
 
@@ -467,8 +457,7 @@ public class DeviceServiceImpl extends WebSocketClient implements DeviceService 
      * @param message
      */
     private void sendMessage(Message message) {
-        String sendString = JSON.toJSONString(message);
-        send(sendString);
+        send(JsonUtil.toJsonStr(message));
     }
 
     /**
@@ -490,7 +479,6 @@ public class DeviceServiceImpl extends WebSocketClient implements DeviceService 
                     collectEnviroData = false;
                 }
                 uploadEnvironmentDateCommand(toService);
-                uploadEnvironmentDateCommand(toAdmin);
             }
         });
         collectThread.start();
